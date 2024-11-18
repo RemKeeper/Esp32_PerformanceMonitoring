@@ -4,49 +4,67 @@
 #include "SetWeb.hpp"
 #include "GetSystemInfo.hpp"
 #include "Network.hpp"
-#include "Display.hpp"
-
-
-
+#include "WifiAp.hpp"
 
 #define SDA_PIN 26
 #define SCL_PIN 27
 
-#define MAX_RETRIES 20  // 网络最大连接次数
+char ssid[100] = "";
+char pass[100] = "";
+char ip[100] = "";
 
-String ssid = "";
-String pass = "";
-String ip = "";
-
-HTTPClient http;
-
+boolean IsConfigured = false;
 
 void setup() {
   EEPROM.begin(EEPROM_SIZE);  // 初始化EEPROM
 
   Serial.begin(9600);
 
-  if (connectWifi()) {
-    Serial.println("set up");
-  }
+  // 尝试从EEPROM中读取相关配置
+  readCredentialsFromEEPROM(ssid, pass, ip);
+
+  Serial.println("ssid: ");
+  Serial.println(ssid);
+  Serial.println("pass: ");
+  Serial.println(pass);
+  Serial.println("ip: ");
+  Serial.println(ip);
 
   Wire.begin(SDA_PIN, SCL_PIN);
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     Serial.println(F("SSD1306 allocation failed"));
-    for (;;);
+    for (;;)
+      ;
   }
-  display.clearDisplay();
-  Serial.println("初始化完成");
-  display.display();
+
+  // 判断是否需要重新配置
+  if (strlen(ssid) == 0 || strlen(pass) == 0 || strlen(ip) == 0) {
+    Serial.println("未找到配置信息，开始配置");
+    startAP();
+    setWeb();
+  } else {
+    IsConfigured = true;
+    if (connectWifi()) {
+      Serial.println("set up");
+    } else {
+      eraseEEPROM();
+      ESP.restart();
+    }
+  }
+
+
+
+  
 }
 
 void loop() {
+  if (!IsConfigured) {
+    server.handleClient();
+  }
+
   // 调用HTTP请求函数
   fetchAndDisplaySystemInfo();
 
   // 延迟一段时间
   delay(10000);  // 每10秒请求一次
 }
-
-
-

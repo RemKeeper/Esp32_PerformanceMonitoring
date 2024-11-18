@@ -1,5 +1,9 @@
 #include <WiFi.h>
 
+extern char ssid[100];
+extern char pass[100];
+#define MAX_RETRIES 20  // 网络最大连接次数
+
 bool connectWifi() {
   Serial.println("调用WiFi连接函数");
   WiFi.begin(ssid, pass);

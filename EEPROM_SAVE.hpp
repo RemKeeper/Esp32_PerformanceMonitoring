@@ -1,3 +1,6 @@
+#ifndef EEPROM_SAVE_HPP
+#define EEPROM_SAVE_HPP
+
 #include <EEPROM.h>
 #include <Arduino.h>
 
@@ -6,7 +9,9 @@
 #define PASS_ADDR 100    // 密码的起始地址
 #define IP_ADDR 200      // IP地址的起始地址
 
-
+extern char ssid[100];
+extern char pass[100];
+extern char ip[100];
 
 void writeCredentialsToEEPROM(const char* ssid, const char* pass, const char* ip) {
   // 写入SSID
@@ -49,3 +54,13 @@ void readCredentialsFromEEPROM(char* ssid, char* pass, char* ip) {
     if (ip[i] == '\0') break;
   }
 }
+
+//擦除EEPROM
+void eraseEEPROM() {
+  for (int i = 0; i < EEPROM_SIZE; i++) {
+    EEPROM.write(i, 0);
+  }
+  EEPROM.commit();
+}
+
+#endif // EEPROM_SAVE_HPP
